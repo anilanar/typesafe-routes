@@ -1,20 +1,27 @@
 import express from "express";
-import { booleanParser, intParser, route, stringParser } from "..";
+import { booleanParser, intParser, optional, route, stringParser } from "..";
 
-const homeRoute = route("/", {}, {});
+const homeRoute = route({ template: "/" });
 
-const settingsRoute = route("/settings/:mode&:showAllOptions?", {
-  mode: intParser,
-  showAllOptions: booleanParser,
-}, {});
+const settingsRoute = route({
+  template: "/settings/:mode",
+  parserMap: {
+    mode: intParser,
+  },
+  queryParamsParserMap: {
+    showAllOptions: optional(booleanParser),
+  },
+});
 
-const accountRoute = route("/account/:id", {
-  id: stringParser,
-}, { settingsRoute });
+const accountRoute = route({
+  template: "/account/:id",
+  parserMap: {
+    id: stringParser,
+  },
+  children: { settingsRoute },
+});
 
-const mainView = (p?: {
-  content: string;
-}) => `
+const mainView = (p?: { content: string }) => `
   <!DOCTYPE html>
   <html lang="en">
   <head>
@@ -43,24 +50,18 @@ const mainView = (p?: {
   </html>
 `;
 
-const accountView = (p: {
-  id: string;
-  content?: string;
-}) => `
+const accountView = (p: { id: string; content?: string }) => `
   <h3>${p.id}</h3>
-  <a href="${accountRoute({ id: p.id })
-    .settingsRoute({ mode: 1, showAllOptions: true })
-    .$
+  <a href="${
+    accountRoute({ id: p.id }).settingsRoute({ mode: 1, showAllOptions: true })
+      .$
   }">
     settings
   </a>
   ${p.content ?? ""}
 `;
 
-const settingsView = (p: {
-  mode: number,
-  showAllOptions?: boolean,
-}) => `
+const settingsView = (p: { mode: number; showAllOptions?: boolean }) => `
   <h4>settings</h4>
   <p>mode: ${p.mode}</p>
   <p>showAllOptions: ${p.showAllOptions}</p>
@@ -76,21 +77,22 @@ app.use(accountRoute.template, accountRouter);
 
 accountRouter.get<any, any>(homeRoute.template, (req, res) => {
   const { id } = accountRoute.parseParams(req.params);
-  res.send(
-    mainView({ content: accountView({ id }) }),
-  );
+  res.send(mainView({ content: accountView({ id }) }));
 });
 
 accountRouter.get<any, any>(settingsRoute.template, (req, res) => {
   const { id } = accountRoute.parseParams(req.params);
-  const settingsParams = settingsRoute.parseParams({ ...req.params, ...req.query });
+  const settingsParams = settingsRoute.parseParams({
+    ...req.params,
+    ...req.query,
+  });
   res.send(
     mainView({
       content: accountView({
         id,
         content: settingsView(settingsParams),
       }),
-    }),
+    })
   );
 });
 

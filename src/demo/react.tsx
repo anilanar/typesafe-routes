@@ -5,15 +5,27 @@ import { intParser, Link, route, useRouteParams } from "..";
 
 // example taken from https://reactrouter.com/
 
-const invoiceRoute = route(":invoice", { invoice: intParser }, {});
+const invoiceRoute = route({
+  template: ":invoice",
+  parserMap: { invoice: intParser },
+});
 
-const invoicesRoute = route("invoices", {}, { invoice: invoiceRoute });
+const invoicesRoute = route({
+  template: "invoices",
+  children: { invoice: invoiceRoute },
+});
 
-const salesRoute = route("sales", {}, { invoices: invoicesRoute });
+const salesRoute = route({
+  template: "sales",
+  children: { invoices: invoicesRoute },
+});
 
-const homeRoute = route("/", {}, { sales: salesRoute });
+const homeRoute = route({
+  template: "/",
+  children: { sales: salesRoute },
+});
 
-const Root = () =>
+const Root = () => (
   <BrowserRouter>
     <Routes>
       <Route path={homeRoute.template} element={<App />}>
@@ -24,9 +36,10 @@ const Root = () =>
         </Route>
       </Route>
     </Routes>
-  </BrowserRouter>;
+  </BrowserRouter>
+);
 
-const App = () =>
+const App = () => (
   <>
     <h2>React Router v6 Demo</h2>
     <ul>
@@ -34,22 +47,28 @@ const App = () =>
         <Link to={homeRoute({})}>home</Link>
       </li>
       <li>
-        <Link to={homeRoute({}).sales({}).invoices({}).invoice({ invoice: 1337 })}>invoice #1337</Link>
+        <Link
+          to={homeRoute({}).sales({}).invoices({}).invoice({ invoice: 1337 })}
+        >
+          invoice #1337
+        </Link>
       </li>
     </ul>
     <h2>Home</h2>
     <Link to={salesRoute({})}>sales</Link>
     <Outlet />
-  </>;
+  </>
+);
 
-const Sales = () =>
+const Sales = () => (
   <>
     <h3>Sales</h3>
     <Link to={invoicesRoute({})}>invoices</Link>
     <Outlet />
-  </>;
+  </>
+);
 
-const Invoices = () =>
+const Invoices = () => (
   <>
     <h4>Invoices</h4>
     <ul>
@@ -64,13 +83,12 @@ const Invoices = () =>
       </li>
     </ul>
     <Outlet />
-  </>;
+  </>
+);
 
 const Invoice = () => {
   const { invoice } = useRouteParams(invoiceRoute);
-  return (
-    <h5>Invoice #{invoice}</h5>
-  );
-}
+  return <h5>Invoice #{invoice}</h5>;
+};
 
 render(<Root />, document.getElementById("app"));
