@@ -1,5 +1,10 @@
 <img title="logo" src="logo.png" />
 
+# WIP
+
+This is a hard-fork from [typesafe-routes](https://github.com/kruschid/typesafe-routes). Will update documentation as time allows.
+
+
 # Typesafe Routes
 
 Spices up your favorite routing library by adding type-safety to plain string-based route definitions. Let typescript handle the detection of broken links in compilation time while you create maintainable software products.
